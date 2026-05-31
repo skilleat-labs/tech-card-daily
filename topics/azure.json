@@ -1,0 +1,24 @@
+{
+  "series": "azure",
+  "name": "Azure",
+  "icon": "☁",
+  "color": "#378ADD",
+  "keywords": [
+    "AKS",
+    "ACR",
+    "App Service",
+    "Azure Functions",
+    "Blob Storage",
+    "CosmosDB",
+    "Azure AD",
+    "Key Vault",
+    "VNet",
+    "NSG",
+    "Load Balancer",
+    "API Management",
+    "Service Bus",
+    "Azure Monitor",
+    "ARM 템플릿"
+  ],
+  "posted": []
+}

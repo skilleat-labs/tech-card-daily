@@ -1,0 +1,24 @@
+{
+  "series": "docker",
+  "name": "Docker",
+  "icon": "🐳",
+  "color": "#1D9E75",
+  "keywords": [
+    "이미지",
+    "컨테이너",
+    "Dockerfile",
+    "레이어",
+    "볼륨",
+    "네트워크",
+    "컴포즈",
+    "레지스트리",
+    "멀티스테이지빌드",
+    "CMD vs ENTRYPOINT",
+    "COPY vs ADD",
+    "환경변수",
+    "포트바인딩",
+    "데몬",
+    "컨텍스트"
+  ],
+  "posted": []
+}

@@ -1,0 +1,29 @@
+{
+  "series": "k8s",
+  "name": "Kubernetes",
+  "icon": "☸",
+  "color": "#2B4FE8",
+  "keywords": [
+    "Pod",
+    "Deployment",
+    "Service",
+    "Namespace",
+    "ConfigMap",
+    "Secret",
+    "ReplicaSet",
+    "StatefulSet",
+    "DaemonSet",
+    "Ingress",
+    "PersistentVolume",
+    "HPA",
+    "노드",
+    "클러스터",
+    "kubectl",
+    "헬름",
+    "사이드카",
+    "init컨테이너",
+    "livenessProbe",
+    "readinessProbe"
+  ],
+  "posted": []
+}

@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>스킬잇 카드 생성기</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0d0d1f;
+    color: #fff;
+    font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+    min-height: 100vh;
+  }
+
+  /* ─── 앱 레이아웃 ─── */
+  .app-header {
+    background: #1A1A35;
+    border-bottom: 3px solid #2B4FE8;
+    padding: 18px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .app-header h1 { font-size: 20px; font-weight: 700; letter-spacing: .06em; }
+  .app-header .sub { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 3px; }
+
+  .app-body {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    min-height: calc(100vh - 65px);
+  }
+
+  /* ─── 사이드패널 ─── */
+  .sidebar {
+    background: #13132a;
+    border-right: 1px solid rgba(43,79,232,0.2);
+    padding: 28px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: auto;
+    max-height: calc(100vh - 65px);
+  }
+
+  .field-group label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    color: #7F9BFF;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  select, input[type="text"], input[type="password"], textarea {
+    width: 100%;
+    background: #1e1e40;
+    border: 1px solid rgba(43,79,232,0.3);
+    border-radius: 8px;
+    color: #fff;
+    font-family: inherit;
+    font-size: 14px;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color .2s;
+    resize: vertical;
+  }
+  select:focus, input:focus, textarea:focus { border-color: #2B4FE8; }
+  textarea { line-height: 1.6; }
+  textarea::placeholder { color: rgba(255,255,255,0.25); }
+
+  .series-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .series-btn {
+    background: #1e1e40;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    color: #fff;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    padding: 11px 8px;
+    text-align: center;
+    transition: all .2s;
+  }
+  .series-btn:hover { border-color: rgba(255,255,255,0.15); }
+  .series-btn.active { border-color: var(--series-color); background: color-mix(in srgb, var(--series-color) 12%, transparent); }
+  .series-btn .icon { font-size: 18px; display: block; margin-bottom: 3px; }
+  .series-btn .name { font-size: 11px; color: rgba(255,255,255,0.55); }
+
+  /* 추천 버튼 */
+  .btn-suggest {
+    background: rgba(127,151,255,0.08);
+    border: 1px dashed rgba(127,151,255,0.4);
+    border-radius: 10px;
+    color: #7F9BFF;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 11px 14px;
+    width: 100%;
+    text-align: left;
+    transition: all .2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-suggest:hover { background: rgba(127,151,255,0.14); border-style: solid; }
+  .btn-suggest:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* 추천 패널 */
+  .rec-panel {
+    background: rgba(43,79,232,0.06);
+    border: 1px solid rgba(43,79,232,0.2);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .rec-panel-header {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    color: rgba(255,255,255,0.4);
+    padding: 10px 14px 8px;
+    border-bottom: 1px solid rgba(43,79,232,0.15);
+  }
+  .rec-item {
+    display: block;
+    width: 100%;
+    background: none;
+    border: none;
+    border-bottom: 1px solid rgba(43,79,232,0.1);
+    color: #fff;
+    cursor: pointer;
+    font-family: inherit;
+    padding: 12px 14px;
+    text-align: left;
+    transition: background .15s;
+  }
+  .rec-item:last-child { border-bottom: none; }
+  .rec-item:hover { background: rgba(43,79,232,0.1); }
+  .rec-item-title { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+  .rec-item-reason { font-size: 11px; color: rgba(255,255,255,0.4); }
+
+  /* 주요 버튼들 */
+  .btn-primary {
+    background: #2B4FE8;
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    padding: 14px;
+    width: 100%;
+    transition: background .2s, transform .1s;
+  }
+  .btn-primary:hover { background: #3a5ff0; }
+  .btn-primary:active { transform: scale(.98); }
+  .btn-primary:disabled { background: #22224a; color: rgba(255,255,255,0.3); cursor: not-allowed; }
+
+  .btn-secondary {
+    background: transparent;
+    border: 2px solid rgba(43,79,232,0.5);
+    border-radius: 10px;
+    color: #7F9BFF;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 11px;
+    width: 100%;
+    transition: all .2s;
+  }
+  .btn-secondary:hover { background: rgba(43,79,232,0.1); }
+  .btn-secondary:disabled { opacity: .35; cursor: not-allowed; }
+
+  .status-bar {
+    background: rgba(43,79,232,0.06);
+    border: 1px solid rgba(43,79,232,0.18);
+    border-radius: 8px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.5);
+    padding: 10px 14px;
+    min-height: 38px;
+    line-height: 1.5;
+  }
+  .status-bar.loading { color: #7F9BFF; }
+  .status-bar.error   { color: #ff6b6b; border-color: rgba(255,107,107,0.3); }
+  .status-bar.success { color: #4ecb71; border-color: rgba(78,203,113,0.25); }
+
+  .api-key-row { display: flex; gap: 8px; align-items: center; }
+  .api-key-row input { flex: 1; }
+  .toggle-btn {
+    background: #1e1e40;
+    border: 1px solid rgba(43,79,232,0.3);
+    border-radius: 6px;
+    color: rgba(255,255,255,0.45);
+    cursor: pointer;
+    font-size: 11px;
+    padding: 6px 10px;
+    white-space: nowrap;
+  }
+
+  .divider {
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    margin: 4px 0;
+  }
+
+  /* ─── 미리보기 영역 ─── */
+  .preview-area {
+    padding: 36px 40px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    color: rgba(255,255,255,0.3);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  .cards-row {
+    display: flex;
+    gap: 20px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+
+  .card-wrapper { flex-shrink: 0; }
+  .card-label {
+    font-size: 11px;
+    color: rgba(255,255,255,0.3);
+    text-align: center;
+    margin-bottom: 8px;
+    letter-spacing: .06em;
+  }
+
+  /* 1080px → 300px */
+  .card-scale-wrap {
+    width: 300px;
+    height: 300px;
+    overflow: hidden;
+    border-radius: 6px;
+    box-shadow: 0 8px 28px rgba(0,0,0,.65);
+    cursor: pointer;
+    transition: transform .2s, box-shadow .2s;
+  }
+  .card-scale-wrap:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 14px 36px rgba(0,0,0,.7);
+  }
+  .card-scale-wrap .card-inner {
+    transform: scale(0.2778);   /* 300/1080 */
+    transform-origin: top left;
+    width: 1080px;
+    height: 1080px;
+  }
+
+  /* ─── 캡션 패널 ─── */
+  .caption-section { display: none; }
+  .caption-box {
+    background: #13132a;
+    border: 1px solid rgba(43,79,232,0.22);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .caption-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 18px;
+    border-bottom: 1px solid rgba(43,79,232,0.15);
+    background: rgba(43,79,232,0.06);
+  }
+  .caption-toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .caption-tab {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.4);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 6px;
+    transition: all .15s;
+  }
+  .caption-tab.active {
+    background: rgba(43,79,232,0.2);
+    color: #7F9BFF;
+  }
+  .caption-char-count { font-size: 11px; color: rgba(255,255,255,0.25); }
+  .btn-copy {
+    background: rgba(43,79,232,0.15);
+    border: 1px solid rgba(43,79,232,0.35);
+    border-radius: 7px;
+    color: #7F9BFF;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 14px;
+    transition: all .15s;
+  }
+  .btn-copy:hover { background: rgba(43,79,232,0.28); }
+  .btn-copy.copied { color: #4ecb71; border-color: rgba(78,203,113,0.4); background: rgba(78,203,113,0.08); }
+
+  #captionText {
+    font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+    font-size: 13px;
+    line-height: 1.8;
+    color: rgba(255,255,255,0.75);
+    padding: 20px 22px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    min-height: 120px;
+    display: block;
+  }
+
+  /* ─── 카드 공통 (1080×1080) ─── */
+  .skilleat-card {
+    width: 1080px;
+    height: 1080px;
+    background: #1A1A35;
+    font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .card-top-bar {
+    height: 7px;
+    flex-shrink: 0;
+  }
+  .card-body {
+    flex: 1;
+    padding: 56px 60px 48px;
+    display: flex;
+    flex-direction: column;
+  }
+  .card-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 48px;
+  }
+  .series-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.11);
+    border-radius: 100px;
+    padding: 8px 20px;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: .04em;
+  }
+  .card-num {
+    font-size: 20px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.22);
+    letter-spacing: .06em;
+  }
+  .card-content { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+  .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 36px;
+  }
+  .brand-name {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: .14em;
+    color: rgba(255,255,255,0.28);
+  }
+  .dot-indicator { display: flex; gap: 9px; align-items: center; }
+  .dot {
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.18);
+  }
+  .dot.active { width: 26px; border-radius: 5px; }
+
+  /* hook 레이아웃 */
+  .hook-question {
+    font-size: 56px;
+    font-weight: 900;
+    line-height: 1.35;
+    color: #fff;
+    word-break: keep-all;
+  }
+  .hook-sub {
+    font-size: 25px;
+    color: rgba(232,236,255,0.55);
+    margin-top: 28px;
+    line-height: 1.65;
+    word-break: keep-all;
+  }
+  .hook-deco {
+    position: absolute;
+    right: 44px; bottom: 130px;
+    width: 260px; height: 260px;
+    border-radius: 50%;
+  }
+
+  /* answer 레이아웃 */
+  .answer-title {
+    font-size: 50px;
+    font-weight: 900;
+    color: #fff;
+    line-height: 1.3;
+    margin-bottom: 18px;
+    word-break: keep-all;
+  }
+  .answer-desc {
+    font-size: 23px;
+    color: rgba(232,236,255,0.62);
+    line-height: 1.75;
+    margin-bottom: 44px;
+    word-break: keep-all;
+  }
+  .diagram-wrap {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(43,79,232,0.18);
+    border-radius: 18px;
+    padding: 32px 28px;
+  }
+  .diagram-wrap svg { width: 100%; height: auto; }
+
+  /* points 레이아웃 */
+  .points-title {
+    font-size: 42px;
+    font-weight: 900;
+    color: #fff;
+    margin-bottom: 40px;
+    word-break: keep-all;
+    line-height: 1.3;
+  }
+  .point-list { display: flex; flex-direction: column; gap: 20px; }
+  .point-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 22px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 24px 28px;
+  }
+  .point-num {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 20px;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .point-label { font-size: 24px; font-weight: 800; color: #fff; margin-bottom: 5px; }
+  .point-desc  { font-size: 20px; color: rgba(232,236,255,0.6); line-height: 1.5; word-break: keep-all; }
+
+  /* custom 레이아웃 */
+  .custom-title {
+    font-size: 48px;
+    font-weight: 900;
+    color: #fff;
+    margin-bottom: 32px;
+    word-break: keep-all;
+    line-height: 1.3;
+  }
+  .custom-body {
+    font-size: 26px;
+    color: rgba(232,236,255,0.7);
+    line-height: 1.75;
+    word-break: keep-all;
+  }
+
+  /* 오프스크린 */
+  #offscreen-container {
+    position: fixed;
+    top: -9999px; left: -9999px;
+    pointer-events: none;
+  }
+
+  /* 빈 상태 */
+  .empty-state {
+    color: rgba(255,255,255,0.18);
+    font-size: 14px;
+    padding: 80px 0;
+    text-align: center;
+    width: 100%;
+  }
+  .empty-state-icon { font-size: 40px; margin-bottom: 12px; opacity: .4; }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div>
+    <h1>스킬잇 카드 생성기</h1>
+    <div class="sub">@feeltechedu · 기술 개념 카드 자동 생성</div>
+  </div>
+</header>
+
+<div class="app-body">
+
+  <!-- ─── 사이드바 ─── -->
+  <aside class="sidebar">
+
+    <!-- 시리즈 -->
+    <div class="field-group">
+      <label>시리즈</label>
+      <div class="series-grid" id="seriesGrid">
+        <button class="series-btn active" data-id="k8s"    data-color="#2B4FE8" data-icon="☸"  data-name="Kubernetes" style="--series-color:#2B4FE8">
+          <span class="icon">☸</span><span class="name">Kubernetes</span>
+        </button>
+        <button class="series-btn"        data-id="docker" data-color="#1D9E75" data-icon="🐳" data-name="Docker"     style="--series-color:#1D9E75">
+          <span class="icon">🐳</span><span class="name">Docker</span>
+        </button>
+        <button class="series-btn"        data-id="azure"  data-color="#378ADD" data-icon="☁"  data-name="Azure"      style="--series-color:#378ADD">
+          <span class="icon">☁</span><span class="name">Azure</span>
+        </button>
+        <button class="series-btn"        data-id="aiml"   data-color="#7F77DD" data-icon="🤖" data-name="AI·ML"      style="--series-color:#7F77DD">
+          <span class="icon">🤖</span><span class="name">AI·ML</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 오늘 뭐 만들까 -->
+    <button class="btn-suggest" id="suggestBtn" onclick="getSuggestions()">
+      <span>✦</span> 오늘 뭐 만들까?
+    </button>
+
+    <!-- 추천 패널 (기본 숨김) -->
+    <div class="rec-panel" id="recPanel" style="display:none">
+      <div class="rec-panel-header">추천 아이디어</div>
+      <div id="recList"></div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- 프롬프트 -->
+    <div class="field-group">
+      <label>
+        <span>프롬프트</span>
+        <span style="font-size:10px;color:rgba(255,255,255,0.3);font-weight:400;text-transform:none;letter-spacing:0">자유롭게 지시하세요</span>
+      </label>
+      <textarea id="promptInput" rows="7"
+        placeholder="잘 되는 프롬프트 공식:
+[개념] + [비유 고정] + [핵심 메시지 1개] + [타겟] + [카드 수/흐름] + [품질 조건]
+
+── 예시 1 (개념 비교) ──
+도커 컨테이너와 쿠버네티스 파드 차이를 설명해줘.
+비유: 에어팟 케이스(Pod)가 이어폰(컨테이너)을 감싸는 구조.
+핵심 메시지: k8s는 컨테이너가 아니라 파드 단위로 실행한다.
+대상: 쿠버네티스 입문자. 도식화 포함. 5장.
+각 카드 타이틀 아래 반드시 설명 2줄 이상 넣어줘.
+
+── 예시 2 (흐름 설명) ──
+kubectl apply 실행 후 파드가 뜨기까지의 내부 흐름을 설명해줘.
+API Server → etcd → Scheduler → kubelet 순서로.
+핵심 메시지: 각 컴포넌트가 왜 분리되어 있는지 이유 포함.
+대상: CKAD 준비 중인 개발자. 흐름도 카드 포함. 4장.
+
+── 예시 3 (실수/함정) ──
+쿠버네티스 초보가 Service 설정에서 자주 하는 실수 3가지.
+비유: 택배 주소 오기재에 빗대서.
+핵심 메시지: selector 불일치가 가장 흔한 원인.
+공감 가는 톤으로, 각 실수마다 잘못된 상황 → 해결법 구조로. 3장."></textarea>
+    </div>
+
+    <!-- API 키 -->
+    <div class="field-group">
+      <label>Claude API 키</label>
+      <div class="api-key-row">
+        <input type="password" id="apiKeyInput" placeholder="sk-ant-...">
+        <button class="toggle-btn" onclick="toggleApiKey()">보기</button>
+      </div>
+    </div>
+
+    <!-- 생성 버튼 -->
+    <button class="btn-primary" id="generateBtn" onclick="generateCards()">
+      ✦ 카드 생성하기
+    </button>
+
+    <div class="status-bar" id="statusBar">프롬프트를 입력하고 생성 버튼을 누르세요.</div>
+
+    <!-- 다운로드 -->
+    <button class="btn-secondary" id="downloadBtn" onclick="downloadZip()" disabled>
+      ↓ ZIP 다운로드 (이미지 + 캡션)
+    </button>
+
+    <!-- 수동 편집 -->
+    <details>
+      <summary style="font-size:12px;color:rgba(255,255,255,0.3);cursor:pointer;user-select:none;">직접 편집 (JSON)</summary>
+      <textarea id="manualJson" rows="10" style="margin-top:10px;font-size:11px;line-height:1.6;"
+        placeholder='{"cards":[...],"caption":"..."}'></textarea>
+      <button class="btn-secondary" style="margin-top:8px;" onclick="applyManualJson()">적용</button>
+    </details>
+
+  </aside>
+
+  <!-- ─── 미리보기 ─── -->
+  <main class="preview-area">
+
+    <!-- 카드 미리보기 -->
+    <div>
+      <div class="section-label">카드 미리보기 <span style="font-weight:400;opacity:.6">(클릭하면 확대)</span></div>
+      <div class="cards-row" id="cardsRow">
+        <div class="empty-state">
+          <div class="empty-state-icon">✦</div>
+          프롬프트를 입력하고 생성 버튼을 누르세요.
+        </div>
+      </div>
+    </div>
+
+    <!-- 캡션 -->
+    <div class="caption-section" id="captionSection">
+      <div class="section-label">SNS 캡션</div>
+      <div class="caption-box">
+        <div class="caption-toolbar">
+          <div class="caption-toolbar-left">
+            <button class="caption-tab active" onclick="switchTab('instagram', this)">Instagram</button>
+            <button class="caption-tab" onclick="switchTab('linkedin', this)">LinkedIn</button>
+            <span class="caption-char-count" id="charCount"></span>
+          </div>
+          <button class="btn-copy" id="copyBtn" onclick="copyCaption()">복사</button>
+        </div>
+        <pre id="captionText"></pre>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- 오프스크린 -->
+<div id="offscreen-container"></div>
+
+<!-- 확대 모달 -->
+<div id="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:1000;align-items:center;justify-content:center;cursor:zoom-out;" onclick="closeModal()">
+  <img id="modalImg" style="max-width:88vmin;max-height:88vmin;border-radius:6px;box-shadow:0 20px 60px rgba(0,0,0,.9);">
+</div>
+
+<script src="scripts/card-renderer.js"></script>
+<script src="scripts/api-client.js"></script>
+<script src="scripts/downloader.js"></script>
+<script>
+
+// ─── 상태 ───
+let currentSeries  = { id: 'k8s', color: '#2B4FE8', icon: '☸', name: 'Kubernetes' };
+let currentCardData = null;   // { cards: [...], caption: "...", caption_linkedin: "..." }
+let renderedBlobs   = [];
+
+// ─── 시리즈 선택 ───
+document.getElementById('seriesGrid').addEventListener('click', e => {
+  const btn = e.target.closest('.series-btn');
+  if (!btn) return;
+  document.querySelectorAll('.series-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentSeries = { id: btn.dataset.id, color: btn.dataset.color, icon: btn.dataset.icon, name: btn.dataset.name };
+});
+
+function toggleApiKey() {
+  const inp = document.getElementById('apiKeyInput');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+function setStatus(msg, type = '') {
+  const el = document.getElementById('statusBar');
+  el.textContent = msg;
+  el.className = 'status-bar' + (type ? ' ' + type : '');
+}
+
+// ─── 오늘 뭐 만들까? ───
+async function getSuggestions() {
+  const apiKey = document.getElementById('apiKeyInput').value.trim();
+  if (!apiKey) { setStatus('API 키를 먼저 입력해 주세요.', 'error'); return; }
+
+  const btn = document.getElementById('suggestBtn');
+  btn.disabled = true;
+  btn.textContent = '추천 생성 중...';
+  setStatus('오늘의 아이디어 생성 중...', 'loading');
+
+  try {
+    const posted = await loadPostedKeywords(currentSeries.id);
+    const recs   = await getRecommendations(apiKey, currentSeries, posted);
+    renderRecommendations(recs);
+    setStatus('추천 아이디어가 생성됐습니다.', 'success');
+  } catch(e) {
+    setStatus('추천 오류: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span>✦</span> 오늘 뭐 만들까?';
+  }
+}
+
+function renderRecommendations(recs) {
+  const panel = document.getElementById('recPanel');
+  const list  = document.getElementById('recList');
+  list.innerHTML = '';
+
+  recs.forEach(rec => {
+    const btn = document.createElement('button');
+    btn.className = 'rec-item';
+    btn.innerHTML = `
+      <div class="rec-item-title">${escSidebarHtml(rec.title)}</div>
+      <div class="rec-item-reason">${escSidebarHtml(rec.reason)} · ${rec.cards_hint || 3}장 예상</div>
+    `;
+    btn.addEventListener('click', () => {
+      document.getElementById('promptInput').value = rec.prompt;
+      panel.style.display = 'none';
+      document.getElementById('promptInput').focus();
+    });
+    list.appendChild(btn);
+  });
+
+  panel.style.display = 'block';
+}
+
+function escSidebarHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ─── topics JSON 로드 (서버 환경) ───
+async function loadPostedKeywords(seriesId) {
+  try {
+    const resp = await fetch(`topics/${seriesId}.json`);
+    if (!resp.ok) return [];
+    const data = await resp.json();
+    return data.posted || [];
+  } catch { return []; }
+}
+
+// ─── 카드 생성 ───
+async function generateCards() {
+  const prompt = document.getElementById('promptInput').value.trim();
+  const apiKey = document.getElementById('apiKeyInput').value.trim();
+
+  if (!prompt) { setStatus('프롬프트를 입력해 주세요.', 'error'); return; }
+  if (!apiKey)  { setStatus('Claude API 키를 입력해 주세요.', 'error'); return; }
+
+  document.getElementById('generateBtn').disabled = true;
+  document.getElementById('downloadBtn').disabled = true;
+  setStatus('Claude API 호출 중...', 'loading');
+
+  try {
+    const data = await callClaudeAPI(apiKey, currentSeries, prompt);
+    currentCardData = data;
+    renderedBlobs   = [];
+
+    document.getElementById('manualJson').value = JSON.stringify(data, null, 2);
+
+    setStatus(`카드 ${data.cards.length}장 렌더링 중...`, 'loading');
+    await renderPreview(data);
+    renderCaption(data);
+
+    setStatus(`카드 ${data.cards.length}장 생성 완료!`, 'success');
+    document.getElementById('downloadBtn').disabled = false;
+  } catch(e) {
+    setStatus('오류: ' + e.message, 'error');
+    console.error(e);
+  } finally {
+    document.getElementById('generateBtn').disabled = false;
+  }
+}
+
+// ─── 수동 JSON 적용 ───
+async function applyManualJson() {
+  try {
+    const data = JSON.parse(document.getElementById('manualJson').value);
+    currentCardData = data;
+    renderedBlobs = [];
+    await renderPreview(data);
+    renderCaption(data);
+    setStatus('카드 업데이트 완료!', 'success');
+    document.getElementById('downloadBtn').disabled = false;
+  } catch(e) {
+    setStatus('JSON 파싱 오류: ' + e.message, 'error');
+  }
+}
+
+// ─── 미리보기 렌더링 ───
+async function renderPreview(data) {
+  const row = document.getElementById('cardsRow');
+  row.innerHTML = '';
+
+  const total  = data.cards.length;
+  const htmls  = buildCardHTMLs(data, currentSeries);
+
+  htmls.forEach((html, i) => {
+    const wrapper   = document.createElement('div');
+    wrapper.className = 'card-wrapper';
+
+    const label = document.createElement('div');
+    label.className = 'card-label';
+    label.textContent = `카드 ${i + 1} / ${total}`;
+
+    const scaleWrap = document.createElement('div');
+    scaleWrap.className = 'card-scale-wrap';
+    scaleWrap.innerHTML = `<div class="card-inner">${html}</div>`;
+    scaleWrap.addEventListener('click', () => openModal(i));
+
+    wrapper.append(label, scaleWrap);
+    row.appendChild(wrapper);
+  });
+}
+
+// ─── 캡션 렌더링 ───
+let captionMode = 'instagram';
+
+function renderCaption(data) {
+  const section = document.getElementById('captionSection');
+  const pre     = document.getElementById('captionText');
+  section.style.display = 'block';
+  updateCaptionDisplay(data);
+}
+
+function updateCaptionDisplay(data) {
+  if (!data) return;
+  const pre  = document.getElementById('captionText');
+  const text = captionMode === 'linkedin'
+    ? (data.caption_linkedin || data.caption || '')
+    : (data.caption || '');
+  pre.textContent = text;
+  document.getElementById('charCount').textContent = `${text.length}자`;
+}
+
+function switchTab(mode, el) {
+  captionMode = mode;
+  document.querySelectorAll('.caption-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  updateCaptionDisplay(currentCardData);
+}
+
+async function copyCaption() {
+  const text = document.getElementById('captionText').textContent;
+  await navigator.clipboard.writeText(text);
+  const btn = document.getElementById('copyBtn');
+  btn.textContent = '복사됨 ✓';
+  btn.classList.add('copied');
+  setTimeout(() => { btn.textContent = '복사'; btn.classList.remove('copied'); }, 2000);
+}
+
+// ─── 모달 ───
+async function openModal(idx) {
+  const modal = document.getElementById('modal');
+  const img   = document.getElementById('modalImg');
+  modal.style.display = 'flex';
+
+  if (renderedBlobs[idx]) {
+    img.src = URL.createObjectURL(renderedBlobs[idx]);
+    return;
+  }
+  setStatus('고해상도 렌더링 중...', 'loading');
+  try {
+    const blob = await renderCardToBlob(idx, currentCardData, currentSeries);
+    renderedBlobs[idx] = blob;
+    img.src = URL.createObjectURL(blob);
+    setStatus('렌더링 완료', 'success');
+  } catch(e) {
+    setStatus('렌더링 오류: ' + e.message, 'error');
+    modal.style.display = 'none';
+  }
+}
+
+function closeModal() { document.getElementById('modal').style.display = 'none'; }
+
+// ─── ZIP 다운로드 ───
+async function downloadZip() {
+  if (!currentCardData) return;
+  const total = currentCardData.cards.length;
+
+  document.getElementById('downloadBtn').disabled = true;
+
+  try {
+    const zip = new JSZip();
+
+    for (let i = 0; i < total; i++) {
+      setStatus(`PNG 렌더링 중 (${i+1}/${total})...`, 'loading');
+      const blob = renderedBlobs[i] || await renderCardToBlob(i, currentCardData, currentSeries);
+      renderedBlobs[i] = blob;
+      zip.file(`card${i+1}_${currentSeries.id}.png`, blob);
+    }
+
+    // 캡션 텍스트 포함
+    if (currentCardData.caption) {
+      const insta   = currentCardData.caption || '';
+      const linkedin = currentCardData.caption_linkedin || currentCardData.caption || '';
+      zip.file('caption_instagram.txt', insta);
+      zip.file('caption_linkedin.txt', linkedin);
+    }
+
+    setStatus('ZIP 압축 중...', 'loading');
+    const zipBlob = await zip.generateAsync({ type: 'blob' });
+    const slug = document.getElementById('promptInput').value.slice(0, 20).replace(/\s+/g, '_');
+    triggerDownload(zipBlob, `skilleat_${currentSeries.id}_${slug}.zip`);
+    setStatus('다운로드 완료!', 'success');
+  } catch(e) {
+    setStatus('다운로드 오류: ' + e.message, 'error');
+  } finally {
+    document.getElementById('downloadBtn').disabled = false;
+  }
+}
+
+function triggerDownload(blob, filename) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+
+</script>
+</body>
+</html>

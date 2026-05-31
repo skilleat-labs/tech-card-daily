@@ -1,0 +1,50 @@
+name: Daily Card Post
+
+on:
+  schedule:
+    - cron: '0 22 * * *'   # UTC 22:00 = KST 07:00
+  workflow_dispatch:
+    inputs:
+      series_id:
+        description: '시리즈 ID (k8s/docker/azure/aiml, 비우면 자동 선택)'
+        required: false
+        default: ''
+      keyword:
+        description: '키워드 (비우면 자동 선택)'
+        required: false
+        default: ''
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install anthropic requests playwright
+          playwright install chromium --with-deps
+
+      - name: Run daily pipeline
+        run: python automation/daily_runner.py
+        env:
+          ANTHROPIC_API_KEY:    ${{ secrets.ANTHROPIC_API_KEY }}
+          BUFFER_ACCESS_TOKEN:  ${{ secrets.BUFFER_ACCESS_TOKEN }}
+          BUFFER_PROFILE_IDS:   ${{ secrets.BUFFER_PROFILE_IDS }}
+          SERIES_ID:            ${{ github.event.inputs.series_id }}
+
+      - name: Upload rendered cards (artifact)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rendered-cards-${{ github.run_number }}
+          path: output/
+          retention-days: 7

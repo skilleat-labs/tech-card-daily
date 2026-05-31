@@ -1,0 +1,24 @@
+{
+  "series": "aiml",
+  "name": "AI·ML",
+  "icon": "🤖",
+  "color": "#7F77DD",
+  "keywords": [
+    "프롬프트엔지니어링",
+    "RAG",
+    "파인튜닝",
+    "임베딩",
+    "벡터DB",
+    "토큰",
+    "컨텍스트윈도우",
+    "온도(Temperature)",
+    "에이전트",
+    "함수호출(Tool Use)",
+    "CoT",
+    "제로샷 vs 퓨샷",
+    "할루시네이션",
+    "LLM vs SLM",
+    "멀티모달"
+  ],
+  "posted": []
+}
