@@ -707,8 +707,9 @@ async function getSuggestions() {
   setStatus('오늘의 아이디어 생성 중...', 'loading');
 
   try {
-    const posted = await loadPostedKeywords(currentSeries.id);
-    const recs   = await getRecommendations(apiKey, currentSeries, posted);
+    const allPosted = await loadPostedKeywords(currentSeries.id);
+    const posted    = allPosted.slice(-5);
+    const recs      = await getRecommendations(apiKey, currentSeries, posted);
     renderRecommendations(recs);
     setStatus('추천 아이디어가 생성됐습니다.', 'success');
   } catch(e) {
@@ -746,14 +747,28 @@ function escSidebarHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// ─── topics JSON 로드 (서버 환경) ───
+// ─── localStorage 키워드 기록 ───
+function saveKeywordLocal(seriesId, keyword) {
+  const key  = `skillit_posted_${seriesId}`;
+  const list = JSON.parse(localStorage.getItem(key) || '[]');
+  if (!list.includes(keyword)) list.push(keyword);
+  localStorage.setItem(key, JSON.stringify(list));
+}
+
+function loadLocalKeywords(seriesId) {
+  return JSON.parse(localStorage.getItem(`skillit_posted_${seriesId}`) || '[]');
+}
+
+// ─── topics JSON + localStorage 병합 ───
 async function loadPostedKeywords(seriesId) {
+  const local = loadLocalKeywords(seriesId);
   try {
     const resp = await fetch(`topics/${seriesId}.json`);
-    if (!resp.ok) return [];
+    if (!resp.ok) return local;
     const data = await resp.json();
-    return data.posted || [];
-  } catch { return []; }
+    const merged = [...new Set([...(data.posted || []), ...local])];
+    return merged;
+  } catch { return local; }
 }
 
 // ─── 카드 생성 ───
@@ -778,6 +793,11 @@ async function generateCards() {
     setStatus(`카드 ${data.cards.length}장 렌더링 중...`, 'loading');
     await renderPreview(data);
     renderCaption(data);
+
+    const keyword = data.cards[0]?.content?.title
+                 || data.cards[0]?.content?.question
+                 || prompt.slice(0, 30);
+    saveKeywordLocal(currentSeries.id, keyword);
 
     setStatus(`카드 ${data.cards.length}장 생성 완료!`, 'success');
     document.getElementById('downloadBtn').disabled = false;
