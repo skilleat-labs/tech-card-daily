@@ -33,13 +33,16 @@ function buildCard(card, index, total, series) {
 
 // ── 공통 껍데기 ───────────────────────────────────────────────
 function cardShell(innerHtml, index, total, series) {
+  const isLight = series.id === 'aiml';
+
   const dots = Array.from({ length: total }, (_, i) => {
     const active = i === index;
     return `<span class="dot${active ? ' active' : ''}" style="${active ? `background:${series.color};` : ''}"></span>`;
   }).join('');
 
   return `
-<div class="skilleat-card">
+<div class="skilleat-card${isLight ? ' skilleat-card--light' : ''}">
+  ${isLight ? `<div class="card-bg-deco card-bg-deco--tl"></div><div class="card-bg-deco card-bg-deco--br"></div>` : ''}
   <div class="card-top-bar" style="background:${series.color}"></div>
   <div class="card-body">
     <div class="card-header-row">
@@ -122,19 +125,20 @@ function buildDiagramSVG(nodes, series) {
 
     // 박스
     const isMain = !!node.main;
+    const light  = series.id === 'aiml';
     body += `
       <rect x="${x}" y="${cy - nodeH/2}" width="${nodeW}" height="${nodeH}" rx="10"
-        fill="${isMain ? color + '28' : 'rgba(255,255,255,0.05)'}"
-        stroke="${isMain ? color : 'rgba(255,255,255,0.16)'}"
+        fill="${isMain ? color + '28' : (light ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)')}"
+        stroke="${isMain ? color : (light ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.16)')}"
         stroke-width="${isMain ? 2 : 1}"/>
       <text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="middle"
-        fill="${isMain ? '#fff' : 'rgba(232,236,255,0.82)'}"
+        fill="${isMain ? (light ? '#1a1a35' : '#fff') : (light ? 'rgba(0,0,0,0.7)' : 'rgba(232,236,255,0.82)')}"
         font-family="Malgun Gothic,sans-serif" font-size="16"
         font-weight="${isMain ? '700' : '500'}">${esc(node.label || '')}</text>`;
 
     if (node.sub) {
       body += `<text x="${cx}" y="${cy + nodeH/2 + 18}" text-anchor="middle"
-        fill="rgba(232,236,255,0.42)" font-family="Malgun Gothic,sans-serif" font-size="13">
+        fill="${light ? 'rgba(0,0,0,0.38)' : 'rgba(232,236,255,0.42)'}" font-family="Malgun Gothic,sans-serif" font-size="13">
         ${esc(node.sub)}</text>`;
     }
   });
@@ -212,7 +216,7 @@ async function renderCardToBlob(cardIndex, data, series) {
       height:          1080,
       scale:           1,
       useCORS:         true,
-      backgroundColor: '#1A1A35',
+      backgroundColor: series.id === 'aiml' ? '#fafafa' : '#1A1A35',
       logging:         false,
     });
 

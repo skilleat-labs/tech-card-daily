@@ -500,6 +500,70 @@
     word-break: keep-all;
   }
 
+  /* ─── AI·ML 라이트 테마 ─── */
+  .skilleat-card--light {
+    background: #fafafa;
+  }
+
+  /* 배경 데코 블롭 */
+  .card-bg-deco {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .card-bg-deco--tl {
+    top: -100px; right: -80px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(127,119,221,0.14) 0%, transparent 68%);
+  }
+  .card-bg-deco--br {
+    bottom: -120px; left: -80px;
+    width: 420px; height: 420px;
+    background: radial-gradient(circle, rgba(127,119,221,0.08) 0%, transparent 65%);
+  }
+
+  /* 텍스트 색상 반전 */
+  .skilleat-card--light .hook-question,
+  .skilleat-card--light .answer-title,
+  .skilleat-card--light .points-title,
+  .skilleat-card--light .custom-title,
+  .skilleat-card--light .point-label {
+    color: #111130;
+  }
+  .skilleat-card--light .hook-sub,
+  .skilleat-card--light .answer-desc,
+  .skilleat-card--light .point-desc,
+  .skilleat-card--light .custom-body {
+    color: rgba(17,17,48,0.52);
+  }
+
+  /* 헤더 / 푸터 */
+  .skilleat-card--light .card-num {
+    color: rgba(17,17,48,0.25);
+  }
+  .skilleat-card--light .series-badge {
+    background: rgba(127,119,221,0.08);
+    border-color: rgba(127,119,221,0.2);
+  }
+  .skilleat-card--light .brand-name {
+    color: rgba(17,17,48,0.28);
+  }
+  .skilleat-card--light .dot {
+    background: rgba(17,17,48,0.14);
+  }
+
+  /* 포인트 아이템 */
+  .skilleat-card--light .point-item {
+    background: rgba(127,119,221,0.06);
+    border-color: rgba(127,119,221,0.14);
+  }
+
+  /* 다이어그램 래퍼 */
+  .skilleat-card--light .diagram-wrap {
+    background: rgba(127,119,221,0.04);
+    border-color: rgba(127,119,221,0.15);
+  }
+
   /* 오프스크린 */
   #offscreen-container {
     position: fixed;
