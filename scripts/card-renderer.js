@@ -32,6 +32,22 @@ function buildCard(card, index, total, series) {
 }
 
 // ── 공통 껍데기 ───────────────────────────────────────────────
+const SERIES_DECOS = {
+  k8s: `<div class="card-deco card-deco--k8s-glow"></div>
+        <div class="card-deco card-deco--k8s-ring1"></div>
+        <div class="card-deco card-deco--k8s-ring2"></div>`,
+  docker: `<div class="card-deco card-deco--docker-glow"></div>
+           <div class="card-deco card-deco--docker-box1"></div>
+           <div class="card-deco card-deco--docker-box2"></div>
+           <div class="card-deco card-deco--docker-box3"></div>`,
+  azure: `<div class="card-deco card-deco--azure-c1"></div>
+          <div class="card-deco card-deco--azure-c2"></div>
+          <div class="card-deco card-deco--azure-c3"></div>
+          <div class="card-deco card-deco--azure-bot"></div>`,
+  aiml:  `<div class="card-deco card-deco--aiml-blob1"></div>
+          <div class="card-deco card-deco--aiml-blob2"></div>`,
+};
+
 function cardShell(innerHtml, index, total, series) {
   const isLight = series.id === 'aiml';
 
@@ -41,8 +57,8 @@ function cardShell(innerHtml, index, total, series) {
   }).join('');
 
   return `
-<div class="skilleat-card${isLight ? ' skilleat-card--light' : ''}">
-  ${isLight ? `<div class="card-bg-deco card-bg-deco--tl"></div><div class="card-bg-deco card-bg-deco--br"></div>` : ''}
+<div class="skilleat-card skilleat-card--${series.id}${isLight ? ' skilleat-card--light' : ''}">
+  ${SERIES_DECOS[series.id] || ''}
   <div class="card-top-bar" style="background:${series.color}"></div>
   <div class="card-body">
     <div class="card-header-row">
@@ -216,7 +232,7 @@ async function renderCardToBlob(cardIndex, data, series) {
       height:          1080,
       scale:           1,
       useCORS:         true,
-      backgroundColor: series.id === 'aiml' ? '#fafafa' : '#1A1A35',
+      backgroundColor: ({ k8s: '#090d24', docker: '#071812', azure: '#080e1e', aiml: '#fafafa' })[series.id] || '#1A1A35',
       logging:         false,
     });
 

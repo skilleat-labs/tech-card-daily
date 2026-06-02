@@ -500,29 +500,99 @@
     word-break: keep-all;
   }
 
-  /* ─── AI·ML 라이트 테마 ─── */
-  .skilleat-card--light {
-    background: #fafafa;
+  /* ─── 시리즈별 테마 ─── */
+  .card-deco {
+    position: absolute;
+    pointer-events: none;
+    border-radius: 50%;
   }
 
-  /* 배경 데코 블롭 */
-  .card-bg-deco {
-    position: absolute;
-    border-radius: 50%;
-    pointer-events: none;
+  /* ── Kubernetes: 짙은 네이비 + 동심원 링 ── */
+  .skilleat-card--k8s { background: #090d24; }
+  .card-deco--k8s-glow {
+    bottom: -100px; right: -100px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(43,79,232,0.12) 0%, transparent 65%);
   }
-  .card-bg-deco--tl {
+  .card-deco--k8s-ring1 {
+    bottom: -160px; right: -160px;
+    width: 580px; height: 580px;
+    border: 1.5px solid rgba(43,79,232,0.2);
+    background: transparent;
+  }
+  .card-deco--k8s-ring2 {
+    bottom: -55px; right: -55px;
+    width: 330px; height: 330px;
+    border: 1px solid rgba(43,79,232,0.12);
+    background: transparent;
+  }
+
+  /* ── Docker: 짙은 틸 + 스택 컨테이너 박스 ── */
+  .skilleat-card--docker { background: #071812; }
+  .card-deco--docker-glow {
+    top: -80px; left: -60px;
+    width: 420px; height: 420px;
+    background: radial-gradient(circle, rgba(29,158,117,0.14) 0%, transparent 65%);
+  }
+  .card-deco--docker-box1 {
+    right: 60px; bottom: 200px;
+    width: 210px; height: 44px;
+    border-radius: 10px;
+    border: 1px solid rgba(29,158,117,0.24);
+    background: rgba(29,158,117,0.07);
+  }
+  .card-deco--docker-box2 {
+    right: 60px; bottom: 256px;
+    width: 210px; height: 44px;
+    border-radius: 10px;
+    border: 1px solid rgba(29,158,117,0.15);
+    background: rgba(29,158,117,0.04);
+  }
+  .card-deco--docker-box3 {
+    right: 60px; bottom: 312px;
+    width: 210px; height: 44px;
+    border-radius: 10px;
+    border: 1px solid rgba(29,158,117,0.08);
+    background: rgba(29,158,117,0.02);
+  }
+
+  /* ── Azure: 짙은 스틸 + 구름형 블롭 군집 ── */
+  .skilleat-card--azure { background: #080e1e; }
+  .card-deco--azure-c1 {
+    top: -80px; right: 60px;
+    width: 340px; height: 340px;
+    background: radial-gradient(circle, rgba(55,138,221,0.18) 0%, transparent 65%);
+  }
+  .card-deco--azure-c2 {
+    top: -50px; right: -50px;
+    width: 250px; height: 250px;
+    background: radial-gradient(circle, rgba(55,138,221,0.13) 0%, transparent 65%);
+  }
+  .card-deco--azure-c3 {
+    top: 30px; right: 240px;
+    width: 190px; height: 190px;
+    background: radial-gradient(circle, rgba(55,138,221,0.09) 0%, transparent 65%);
+  }
+  .card-deco--azure-bot {
+    bottom: -150px; left: -90px;
+    width: 480px; height: 480px;
+    background: radial-gradient(circle, rgba(55,138,221,0.07) 0%, transparent 65%);
+  }
+
+  /* ── AI·ML: 흰 배경 + 보라 블롭 ── */
+  .skilleat-card--light { background: #fafafa; }
+  .card-deco--aiml-blob1 {
     top: -100px; right: -80px;
     width: 500px; height: 500px;
     background: radial-gradient(circle, rgba(127,119,221,0.14) 0%, transparent 68%);
   }
-  .card-bg-deco--br {
+  .card-deco--aiml-blob2 {
     bottom: -120px; left: -80px;
     width: 420px; height: 420px;
     background: radial-gradient(circle, rgba(127,119,221,0.08) 0%, transparent 65%);
   }
 
-  /* 텍스트 색상 반전 */
+  /* ── AI·ML 라이트 텍스트 반전 ── */
   .skilleat-card--light .hook-question,
   .skilleat-card--light .answer-title,
   .skilleat-card--light .points-title,
@@ -536,29 +606,17 @@
   .skilleat-card--light .custom-body {
     color: rgba(17,17,48,0.52);
   }
-
-  /* 헤더 / 푸터 */
-  .skilleat-card--light .card-num {
-    color: rgba(17,17,48,0.25);
-  }
+  .skilleat-card--light .card-num   { color: rgba(17,17,48,0.25); }
   .skilleat-card--light .series-badge {
     background: rgba(127,119,221,0.08);
     border-color: rgba(127,119,221,0.2);
   }
-  .skilleat-card--light .brand-name {
-    color: rgba(17,17,48,0.28);
-  }
-  .skilleat-card--light .dot {
-    background: rgba(17,17,48,0.14);
-  }
-
-  /* 포인트 아이템 */
+  .skilleat-card--light .brand-name { color: rgba(17,17,48,0.28); }
+  .skilleat-card--light .dot        { background: rgba(17,17,48,0.14); }
   .skilleat-card--light .point-item {
     background: rgba(127,119,221,0.06);
     border-color: rgba(127,119,221,0.14);
   }
-
-  /* 다이어그램 래퍼 */
   .skilleat-card--light .diagram-wrap {
     background: rgba(127,119,221,0.04);
     border-color: rgba(127,119,221,0.15);
